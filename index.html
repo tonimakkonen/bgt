@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+</head>
+<body>
+
+    <script>
+
+    "use strict";
+
+    var config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 800,
+        scene: {
+            preload: preload,
+            create: create
+        }
+    };
+
+    var game = new Phaser.Game(config);
+
+    const x0 = 400;
+    const y0 = 400;
+    const delta = 40;
+
+    const rings = [
+      {normal: 2, block: 1, temple: 1, enemy: 1, loot: 1}, // r1 6
+      {normal: 6, block: 2, temple: 1, enemy: 2, loot: 1}, // r2 12
+      {normal: 10, block: 2, temple: 1, enemy: 4, loot: 1}, // r3 18
+      {normal: 16, block: 2, temple: 1, enemy: 4, loot: 1}, // r4 24
+      {normal: 18, block: 2, temple: 1, enemy: 4, loot: 5}, // r5 30
+      {normal: 20, block: 2, temple: 1, enemy: 8, loot: 5}, // r6 36
+    ];
+
+    function preload ()
+    {
+        this.load.image('normal', 'normal.png');
+        this.load.image('block', 'block.png');
+        this.load.image('temple', 'temple.png');
+        this.load.image('enemy', 'enemy.png');
+        this.load.image('loot', 'loot.png');
+    }
+
+    function create ()
+    {
+      // Add volcano
+      add(this, 0, 0, "block");
+      for (let i = 0; i < 6; i++) addRandomRing(this, i + 1, rings[i]);
+
+      // Add beach at ring 7
+      for (let i = 0; i < 7*6; i++) add(this, 7, i, "normal");
+    }
+
+    function addRandomRing(th, ring, data) {
+      const total = data.normal + data.block + data.temple + data.enemy + data.loot;
+      if (total != ring*6) throw "Bad number of data for ring " + ring + " : " + data;
+      // add each to array
+      const arrNormal = Array(data.normal).fill("normal");
+      const arrBlock = Array(data.block).fill("block");
+      const arrTemple = Array(data.temple).fill("temple");
+      const arrEnemy = Array(data.enemy).fill("enemy");
+      const arrLoot = Array(data.loot).fill("loot");
+      const arr = arrNormal.concat(arrBlock).concat(arrTemple).concat(arrEnemy).concat(arrLoot);
+      shuffleArray(arr);
+      for (let i = 0; i < ring*6; i++) {
+        add(th, ring, i, arr[i]);
+      }
+    }
+
+    function shuffleArray(array) {
+      for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+    }
+
+    function add(th, ring, place, type) {
+      var pos = findPos(ring, place)
+      th.add.image(pos.x, pos.y, type);
+    }
+
+    function findPos(ring, place) {
+      if (ring < 0) throw "Bad ring: " + ring;
+      if (place >= ringSize(ring)) throw "Bad place for ring " + ring + " : " + place;
+      if (ring == 0) return {x: x0, y: y0};
+
+      // delta
+      const c60 = 0.5;
+      const s60 = Math.sqrt(3) / 2;
+
+      // left down
+      var pos = move(x0, y0 - ring*delta, -delta*s60, +delta*c60, ring, 0, place);
+      if (pos.ok) return {x: pos.x, y: pos.y};
+      // down
+      var pos = move(pos.x, pos. y, 0, +delta, ring, pos.index, place);
+      if (pos.ok) return {x: pos.x, y: pos.y};
+      // right down
+      var pos = move(pos.x, pos. y, +delta*s60, +delta*c60, ring, pos.index, place);
+      if (pos.ok) return {x: pos.x, y: pos.y};
+      // right up
+      var pos = move(pos.x, pos. y, +delta*s60, -delta*c60, ring, pos.index, place);
+      if (pos.ok) return {x: pos.x, y: pos.y};
+      // up
+      var pos = move(pos.x, pos. y, 0, -delta, ring, pos.index, place);
+      if (pos.ok) return {x: pos.x, y: pos.y};
+      // left up
+      var pos = move(pos.x, pos. y, -delta*s60, -delta*c60, ring, pos.index, place);
+      if (pos.ok) return {x: pos.x, y: pos.y};
+      throw "Logic error";
+    }
+
+    function move(x0, y0, dx, dy, count, inIndex, maxIndex) {
+      var index = inIndex;
+      var x = x0;
+      var y = y0;
+      for (let i = 0; i < count; i++) {
+        // If we are where we want to be, return this
+        if (index == maxIndex) {
+          //console.log("find pos at " + index);
+          return {x: x, y: y, index: index, ok: true};
+        }
+        // move otherwise
+        x += dx;
+        y += dy;
+        index += 1;
+      }
+      // not the right place in this move
+      return {x: x, y: y, index: index, ok: false};
+    }
+
+    function ringSize(ring) {
+      if (ring == 0) return 1;
+      return ring * 6;
+    }
+    </script>
+
+</body>
+</html>
