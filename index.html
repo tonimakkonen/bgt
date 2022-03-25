@@ -26,35 +26,46 @@
     const delta = 40;
 
     const rings = [
-      {normal: 2, block: 1, temple: 1, enemy: 1, loot: 1}, // r1 6
-      {normal: 6, block: 2, temple: 1, enemy: 2, loot: 1}, // r2 12
-      {normal: 10, block: 2, temple: 1, enemy: 4, loot: 1}, // r3 18
-      {normal: 16, block: 2, temple: 1, enemy: 4, loot: 1}, // r4 24
-      {normal: 18, block: 2, temple: 1, enemy: 4, loot: 5}, // r5 30
-      {normal: 20, block: 2, temple: 1, enemy: 8, loot: 5}, // r6 36
+      {normal: 0, block: 2, temple: 1, enemy: 2, loot: 1, special: 0}, // r1 6
+      {normal: 5, block: 2, temple: 1, enemy: 2, loot: 1, special: 1}, // r2 12
+      {normal: 7, block: 2, temple: 1, enemy: 5, loot: 1, special: 2}, // r3 18
+      {normal: 12, block: 2, temple: 1, enemy: 5, loot: 2, special: 2}, // r4 24
+      {normal: 15, block: 2, temple: 1, enemy: 6, loot: 4, special: 2}, // r5 30
+      {normal: 17, block: 2, temple: 1, enemy: 8, loot: 4, special: 4}, // r6 36
     ];
 
     function preload ()
     {
-        this.load.image('normal', 'normal.png');
-        this.load.image('block', 'block.png');
-        this.load.image('temple', 'temple.png');
-        this.load.image('enemy', 'enemy.png');
-        this.load.image('loot', 'loot.png');
+      this.load.image('volcano', 'volcano.png');
+      this.load.image('normal', 'normal.png');
+      this.load.image('block', 'block.png');
+      this.load.image('temple', 'temple.png');
+      this.load.image('enemy', 'enemy.png');
+      this.load.image('loot', 'loot.png');
+      this.load.image('special', 'special.png');
     }
 
     function create ()
     {
+      // log tile count:
+      var countEnemy = 0;
+      var countLoot = 0;
+      for (let i = 0; i < 6; i++) {
+        countEnemy += rings[i].enemy;
+        countLoot += rings[i].loot;
+      }
+      console.log("enemies: " + countEnemy);
+      console.log("Loot: " + countLoot);
       // Add volcano
-      add(this, 0, 0, "block");
+      add(this, 0, 0, "volcano");
+      // Rings
       for (let i = 0; i < 6; i++) addRandomRing(this, i + 1, rings[i]);
-
       // Add beach at ring 7
       for (let i = 0; i < 7*6; i++) add(this, 7, i, "normal");
     }
 
     function addRandomRing(th, ring, data) {
-      const total = data.normal + data.block + data.temple + data.enemy + data.loot;
+      const total = data.normal + data.block + data.temple + data.enemy + data.loot + data.special;
       if (total != ring*6) throw "Bad number of data for ring " + ring + " : " + data;
       // add each to array
       const arrNormal = Array(data.normal).fill("normal");
@@ -62,7 +73,8 @@
       const arrTemple = Array(data.temple).fill("temple");
       const arrEnemy = Array(data.enemy).fill("enemy");
       const arrLoot = Array(data.loot).fill("loot");
-      const arr = arrNormal.concat(arrBlock).concat(arrTemple).concat(arrEnemy).concat(arrLoot);
+      const arrSpecial = Array(data.special).fill("special");
+      const arr = arrNormal.concat(arrBlock).concat(arrTemple).concat(arrEnemy).concat(arrLoot).concat(arrSpecial);
       shuffleArray(arr);
       for (let i = 0; i < ring*6; i++) {
         add(th, ring, i, arr[i]);
@@ -80,7 +92,8 @@
 
     function add(th, ring, place, type) {
       var pos = findPos(ring, place)
-      th.add.image(pos.x, pos.y, type);
+      const im = th.add.image(pos.x, pos.y, type);
+      im.setAlpha(1.0 - 0.1*ring);
     }
 
     function findPos(ring, place) {
